@@ -39,7 +39,10 @@ app.use(
         callback(null, true);
         return;
       }
-      callback(new Error(`CORS blocked for origin: ${origin}`));
+      if (env.nodeEnv !== "production") {
+        console.warn(`CORS blocked for origin: ${origin}`);
+      }
+      callback(null, false);
     },
     credentials: true,
   })
