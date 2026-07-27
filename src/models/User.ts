@@ -1,11 +1,15 @@
 import { Schema, model, Document, Types } from "mongoose";
 import { UserRole } from "../types";
 
+export type AuthProvider = "local" | "google";
+
 export interface IUser extends Document {
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   name: string;
   role: UserRole;
+  authProvider: AuthProvider;
+  googleId?: string;
   departmentId?: Types.ObjectId;
   designation?: string;
   avatar?: string;
@@ -24,9 +28,11 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: false },
     name: { type: String, required: true },
     role: { type: String, enum: ["admin", "manager", "employee"], default: "employee" },
+    authProvider: { type: String, enum: ["local", "google"], default: "local" },
+    googleId: { type: String, unique: true, sparse: true },
     departmentId: { type: Schema.Types.ObjectId, ref: "Department" },
     designation: String,
     avatar: String,

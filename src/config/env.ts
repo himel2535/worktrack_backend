@@ -11,4 +11,5 @@ export const env = {
   corsOrigin: process.env.CORS_ORIGIN || "http://localhost:3000",
   nodeEnv: process.env.NODE_ENV || "development",
   useMemoryDb: process.env.USE_MEMORY_DB === "true",
+  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
 };
