@@ -1,9 +1,8 @@
 import dns from "dns";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { env } from "./env";
 
-let memoryServer: MongoMemoryServer | null = null;
+let memoryServer: { stop: () => Promise<boolean> } | null = null;
 
 /** Windows often fails SRV lookups via the default resolver; add public DNS fallbacks. */
 function configureDnsForAtlas(uri: string) {
@@ -17,8 +16,10 @@ export async function connectDB() {
   configureDnsForAtlas(uri);
 
   if (env.useMemoryDb) {
-    memoryServer = await MongoMemoryServer.create();
-    uri = memoryServer.getUri();
+    const { MongoMemoryServer } = await import("mongodb-memory-server");
+    const server = await MongoMemoryServer.create();
+    memoryServer = server;
+    uri = server.getUri();
     console.log("Using in-memory MongoDB (USE_MEMORY_DB=true)");
   }
 
