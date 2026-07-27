@@ -123,7 +123,7 @@ router.post("/users", async (req, res) => {
     name,
     role: role || "employee",
     departmentId: departmentId ? new Types.ObjectId(departmentId) : undefined,
-    designation,
+    designation: designation?.trim() || "Employee",
     phone,
     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
   });

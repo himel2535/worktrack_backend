@@ -1,9 +1,11 @@
 import { Router, Response } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { Types } from "mongoose";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { User, IUser } from "../models/User";
+import { Department } from "../models/Department";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { authenticate } from "../middleware/auth";
 import { AuthRequest, AuthUser } from "../types";
@@ -21,6 +23,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   designation: z.string().max(100).optional(),
+  departmentId: z.string().optional(),
 });
 
 const googleSchema = z.object({
@@ -56,6 +59,11 @@ async function issueTokens(user: IUser, res: Response) {
   return { accessToken, user: authUser };
 }
 
+router.get("/departments", async (_req, res) => {
+  const depts = await Department.find().select("_id name").sort({ name: 1 });
+  res.json(depts);
+});
+
 router.post("/register", async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
@@ -65,12 +73,24 @@ router.post("/register", async (req, res) => {
   if (existing) return res.status(409).json({ error: "Email already registered" });
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+
+  let departmentObjectId: Types.ObjectId | undefined;
+  if (parsed.data.departmentId) {
+    if (!Types.ObjectId.isValid(parsed.data.departmentId)) {
+      return res.status(400).json({ error: "Invalid department" });
+    }
+    const dept = await Department.findById(parsed.data.departmentId);
+    if (!dept) return res.status(400).json({ error: "Department not found" });
+    departmentObjectId = dept._id;
+  }
+
   const user = await User.create({
     email,
     passwordHash,
     name: parsed.data.name.trim(),
     designation: parsed.data.designation?.trim() || "Employee",
     role: "employee",
+    departmentId: departmentObjectId,
     authProvider: "local",
     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(parsed.data.name)}`,
   });

@@ -26,6 +26,7 @@ import notificationRoutes from "./routes/notifications";
 import reportRoutes from "./routes/reports";
 import leaderboardRoutes from "./routes/leaderboard";
 import uploadRoutes from "./routes/upload";
+import { Department } from "./models/Department";
 
 const app = express();
 
@@ -54,6 +55,11 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+app.get("/api/departments", async (_req, res) => {
+  const depts = await Department.find().select("_id name").sort({ name: 1 });
+  res.json(depts);
 });
 
 app.use("/api/auth", authRoutes);
